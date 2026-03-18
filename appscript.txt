@@ -1,0 +1,213 @@
+function doGet(e) {
+  var action = e.parameter.action;
+  var callback = e.parameter.callback;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var result = {};
+
+  try {
+    // --- 1. LOGIN LOGIC ---
+    if (action == "login") {
+      var sheet = ss.getSheetByName("Users");
+      var data = sheet.getDataRange().getValues();
+      var id = String(e.parameter.id).trim();
+      var pass = e.parameter.pass;
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === id && String(data[i][4]) === pass) {
+          result = { status: "success", role: data[i][3], name: data[i][1], id: data[i][0] };
+          break;
+        }
+      }
+      if (!result.status) result = { status: "fail" };
+    }
+
+    // --- 2. HR DASHBOARD LOGIC ---
+else if (action == "getHRDashboard") {
+  var userSheet = ss.getSheetByName("Users");
+  var attSheet = ss.getSheetByName("Attendance");
+  var usersData = userSheet.getDataRange().getValues();
+  var attData = attSheet.getDataRange().getValues();
+  
+  // Aaj ki date ko format karein (Comparison ke liye)
+  var today = new Date();
+  var todayStr = Utilities.formatDate(today, Session.getScriptTimeZone(), "dd/MM/yyyy");
+
+  var internCount = 0;
+  var internList = [];
+  var todayAttendance = [];
+
+  // 1. Intern List Fetch karein
+  for (var i = 1; i < usersData.length; i++) {
+    if (usersData[i][3] === "Intern") {
+      internCount++;
+      internList.push({ 
+        id: usersData[i][0], 
+        name: usersData[i][1], 
+        status: usersData[i][5] || "Pending" 
+      });
+    }
+  }
+
+  // 2. Attendance Fetch karein (Date check fix ke saath)
+  for (var j = 1; j < attData.length; j++) {
+    var rawDate = attData[j][2];
+    var rDate = "";
+    
+    if (rawDate instanceof Date) {
+      rDate = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "dd/MM/yyyy");
+    } else {
+      rDate = String(rawDate).trim();
+    }
+
+    // Sirf aaj ki attendance add karein
+    if (rDate === todayStr) {
+      todayAttendance.push({ 
+        id: String(attData[j][0]).trim(), 
+        name: attData[j][1], 
+        in: attData[j][3], 
+        out: attData[j][4] || "Working" 
+      });
+    }
+  }
+
+  result = { 
+    status: "success", 
+    totalInterns: internCount, 
+    interns: internList, 
+    attendance: todayAttendance 
+  };
+}
+
+else if (action == "setPassword") {
+  var userSheet = ss.getSheetByName("Users");
+  var data = userSheet.getDataRange().getValues();
+  var id = String(e.parameter.id).trim();
+  var newPass = e.parameter.newPass;
+  var found = false;
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === id) {
+      // Password sirf tabhi set hoga agar pehle se khali ho (Security)
+      if (data[i][4] === "" || data[i][4] == null) {
+        userSheet.getRange(i + 1, 5).setValue(newPass);
+        userSheet.getRange(i + 1, 6).setValue("Active"); // Pending se Active
+        result = { status: "success", message: "Password set successfully! Now login." };
+      } else {
+        result = { status: "fail", message: "Password already set. Use login." };
+      }
+      found = true;
+      break;
+    }
+  }
+  if (!found) result = { status: "fail", message: "Invalid ID!" };
+}
+
+    // --- 3. CREATE INTERN ---
+    else if (action == "createIntern") {
+      var userSheet = ss.getSheetByName("Users");
+      var newID = "INT" + (100 + userSheet.getLastRow());
+      userSheet.appendRow([newID, e.parameter.name, e.parameter.email, "Intern", "", "Pending"]);
+      result = { status: "success", generatedId: newID };
+    }
+
+    // --- 4. ATTENDANCE LOGIC (Anti-Duplicate) ---
+    else if (action == "attendance") {
+      var attSheet = ss.getSheetByName("Attendance");
+      var id = String(e.parameter.id).trim();
+      var type = e.parameter.type;
+      var now = new Date();
+      var dateStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "dd/MM/yyyy");
+      var timeStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "HH:mm:ss");
+
+      var data = attSheet.getDataRange().getValues();
+      var rowIndex = -1;
+      var hasIn = false; var hasOut = false;
+
+      for (var j = data.length - 1; j >= 1; j--) {
+        var rowId = String(data[j][0]).trim();
+        var rowDate = (data[j][2] instanceof Date) ? Utilities.formatDate(data[j][2], Session.getScriptTimeZone(), "dd/MM/yyyy") : String(data[j][2]).trim();
+        if (rowId === id && rowDate === dateStr) {
+          rowIndex = j + 1;
+          if (data[j][3] !== "") hasIn = true;
+          if (data[j][4] !== "" && data[j][4] != null) hasOut = true;
+          break;
+        }
+      }
+
+      if (type == "in") {
+        if (hasIn) result = { status: "fail", message: "In-time already submitted!" };
+        else {
+          attSheet.appendRow([id, e.parameter.name, dateStr, timeStr, ""]);
+          result = { status: "success", message: "Punch-In Success!" };
+        }
+      } else {
+        if (!hasIn) result = { status: "fail", message: "Punch-In first!" };
+        else if (hasOut) result = { status: "fail", message: "Already submitted today!" };
+        else {
+          attSheet.getRange(rowIndex, 5).setValue(timeStr);
+          result = { status: "success", message: "Punch-Out Success!" };
+        }
+      }
+    }
+
+    // --- 5. GET HISTORY ---
+    else if (action == "getHistory") {
+  var attSheet = ss.getSheetByName("Attendance");
+  var data = attSheet.getDataRange().getValues();
+  var id = String(e.parameter.id).trim();
+  var history = {};
+  
+  for (var k = 1; k < data.length; k++) {
+    if (String(data[k][0]).trim() === id) {
+      var rawDate = data[k][2];
+      var d = (rawDate instanceof Date) ? Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "dd/MM/yyyy") : String(rawDate).trim();
+      
+      var inTimeRaw = data[k][3];
+      var outTimeRaw = data[k][4];
+      var daySalary = 0;
+      var durationStr = "0h 0m";
+
+      if (inTimeRaw && outTimeRaw && outTimeRaw !== "N/A" && outTimeRaw !== "") {
+        try {
+          // Time Parsing function (handles Strings or Dates)
+          function parseTime(t) {
+            if (t instanceof Date) return t;
+            var timeParts = String(t).match(/(\d+):(\d+):?(\d+)?\s*(AM|PM)?/i);
+            if (!timeParts) return null;
+            var hours = parseInt(timeParts[1]);
+            var mins = parseInt(timeParts[2]);
+            var ampm = timeParts[4];
+            if (ampm && ampm.toUpperCase() === "PM" && hours < 12) hours += 12;
+            if (ampm && ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
+            return new Date(2026, 0, 1, hours, mins, 0);
+          }
+
+          var t1 = parseTime(inTimeRaw);
+          var t2 = parseTime(outTimeRaw);
+          
+          if (t1 && t2) {
+            var diffMs = t2 - t1;
+            var diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins > 0) {
+              var h = Math.floor(diffMins / 60);
+              var m = diffMins % 60;
+              durationStr = h + "h " + m + "m";
+              // Standard: (Mins / 480) * 500
+              daySalary = Number(((diffMins / 480) * 500).toFixed(2));
+              if (daySalary > 500) daySalary = 500; 
+            }
+          }
+        } catch(e) { durationStr = "Format Error"; }
+      }
+      history[d] = { in: inTimeRaw, out: outTimeRaw || "N/A", duration: durationStr, salary: daySalary };
+    }
+  }
+  result = { status: "success", history: history };
+}
+
+
+
+  } catch (err) { result = { status: "error", message: err.toString() }; }
+
+  return ContentService.createTextOutput(callback + "(" + JSON.stringify(result) + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
