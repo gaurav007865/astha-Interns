@@ -124,6 +124,7 @@
     </main>
 
     <script>
+        // This url is used to connect the frontend with the backend (Google Sheets) using JSONP technique. It allows us to fetch data from the server and update the dashboard in real-time without needing a full page reload. The script will handle all interactions such as loading the dashboard data, filtering tables, registering new interns, and logging out.
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy-zM_kG1PA3JvRZ0a77FIwXaid2gBw2NJv1buXh8yb2CQjm-jYjSGjekPWNG-sQOI/exec";
         const user = JSON.parse(localStorage.getItem("user"));
         

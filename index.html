@@ -106,7 +106,7 @@
         document.getElementById('login-section').style.display = type === 'login' ? 'block' : 'none';
         document.getElementById('set-pass-section').style.display = type === 'set' ? 'block' : 'none';
     }
-
+    // This function is used to toggle between login and set password sections without reloading the page. It simply shows one section while hiding the other based on the user's choice.
     async function login() {
         const id = document.getElementById('l-uid').value.trim();
         const pass = document.getElementById('l-pass').value;
