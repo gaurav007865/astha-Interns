@@ -183,7 +183,7 @@
                 }
             }
         }
-
+        // this function is used to filter the intern list table based on the search input. Similar to the attendance filter, it listens for keyup events on the search input field and compares the input value with the names in the intern list table. If a match is found, the corresponding row is displayed; otherwise, it is hidden. This allows HR to quickly find specific interns without having to scroll through the entire list.
         function filterInterns() {
             const input = document.getElementById("searchIntern").value.toUpperCase();
             const rows = document.getElementById("intern-list-body").getElementsByTagName("tr");

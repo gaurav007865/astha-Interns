@@ -303,13 +303,13 @@ function downloadSlip() {
             loadDashboard();
             delete window[cb];
         };
-        const s = document.createElement('script');
+        const s = document.createElement('script');//this line creates a new script element that will be used to make a JSONP request to the server. JSONP is a technique used to overcome cross-origin restrictions in web browsers by dynamically adding a script tag with a source URL that includes a callback function. In this case, the script's source URL is constructed with the action (attendance), type (in or out), user ID, user name, and the callback function name. When the server responds, it will execute the callback function with the response data, allowing the client-side code to handle the response accordingly.
         s.src = `${SCRIPT_URL}?action=attendance&type=${type}&id=${user.id}&name=${encodeURIComponent(user.name)}&callback=${cb}`;
         document.body.appendChild(s);
     }
     // this function is use for logout and clear the local storage data and redirect to login page
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
-    loadDashboard();
+    loadDashboard();//this function is called when the intern dashboard page loads. It fetches the attendance history and salary data for the logged-in intern and updates the calendar, button states, and total salary display accordingly. This ensures that the intern sees their current attendance status and earnings as soon as they access the dashboard.
 </script>
 </body>
 </html>
