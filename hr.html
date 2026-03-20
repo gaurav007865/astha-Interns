@@ -131,6 +131,7 @@
         if(!user || user.role !== "HR") window.location.href = "index.html";
         document.getElementById('hr-welcome').innerText = `Welcome back, ${user.name} 👋`;
 
+        // this function is using for loaddashboard and also update the dashboard in real-time without needing a full page reload. The script will handle all interactions such as loading the dashboard data, filtering tables, registering new interns, and logging out.
         function loadDashboard() {
             const cb = 'jsonp_' + Date.now();
             window[cb] = function(data) {
@@ -170,7 +171,7 @@
             s.src = `${SCRIPT_URL}?action=getHRDashboard&callback=${cb}`;
             document.body.appendChild(s);
         }
-
+        // this function is ude to filter the attendance table based on the search input. It listens for keyup events on the search input field and compares the input value with the names in the attendance table. If a match is found, the corresponding row is displayed; otherwise, it is hidden. This allows HR to quickly find specific attendance records without having to scroll through the entire list.
         function filterAttendance() {
             const input = document.getElementById("searchAtt").value.toUpperCase();
             const rows = document.getElementById("att-body").getElementsByTagName("tr");

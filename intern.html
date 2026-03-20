@@ -299,6 +299,7 @@ function downloadSlip() {
                 text: data.message,
                 confirmButtonColor: '#6366f1'
             });
+            // this function calls the loadDashboard function to refresh the dashboard data and update the UI based on the latest attendance status. After marking attendance (either punch in or punch out), it fetches the updated history and re-renders the calendar, syncs the button states, and recalculates the total salary. This ensures that the intern sees real-time updates without needing to manually refresh the page.
             loadDashboard();
             delete window[cb];
         };
@@ -306,7 +307,7 @@ function downloadSlip() {
         s.src = `${SCRIPT_URL}?action=attendance&type=${type}&id=${user.id}&name=${encodeURIComponent(user.name)}&callback=${cb}`;
         document.body.appendChild(s);
     }
-
+    // this function is use for logout and clear the local storage data and redirect to login page
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
     loadDashboard();
 </script>

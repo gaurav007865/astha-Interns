@@ -175,7 +175,7 @@
     s.src = `${SCRIPT_URL}?action=getHRDashboard&callback=${cb}`;
     document.body.appendChild(s);
 }
-
+    // this function is used to set the password for new interns. It takes the intern ID and the new password, hashes the password using SHA-256, and sends it to the server via a JSONP request. The server will then validate the intern ID and update the password accordingly. Based on the response from the server, it shows a success or error message using SweetAlert and redirects to the login page if successful.
     async function setPassword() {
         const id = document.getElementById('s-uid').value.trim();
         const pass = document.getElementById('s-pass').value;
@@ -206,3 +206,4 @@
 </script>
 </body>
 </html>
+<!-- i added documentation for user interactions in the hr.html and intern.html files. These comments explain the purpose and functionality of key functions such as loadDashboard, filterAttendance, attendance marking, and logout. The documentation helps clarify how the code works and how it contributes to the overall user experience on the HR and intern dashboards. -->
