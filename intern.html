@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Pro Intern Dashboard | IMS</title>   <!--Astha Download This all Files(Code) in Locally for permanant use This Section -->
+    <title>Pro Intern Dashboard | IMS</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -14,6 +14,7 @@
             --glass: rgba(255, 255, 255, 0.8);
             --primary: #6366f1;
             --success: #10b981;
+            --warning: #f59e0b;
             --danger: #f43f5e;
             --sidebar: #1e1b4b;
             --bg: #f3f4f6;
@@ -44,8 +45,10 @@
         .grid { display: grid; grid-template-columns: 1.8fr 1fr; gap: 25px; }
         .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; border: 1px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-        #clock { font-size: 48px; font-weight: 800; color: var(--primary); margin: 20px 0; font-variant-numeric: tabular-nums; }
-        .btn-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        #clock { font-size: 48px; font-weight: 800; color: var(--primary); margin: 10px 0; font-variant-numeric: tabular-nums; }
+        #session-timer { font-size: 18px; font-weight: 600; color: var(--success); margin-bottom: 20px; display: none; }
+        
+        .btn-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .btn { padding: 16px; border: none; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-in { background: var(--success); color: white; }
         .btn-out { background: var(--danger); color: white; }
@@ -57,10 +60,11 @@
         .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: white; font-size: 14px; position: relative; cursor: pointer; transition: 0.2s; border: 1px solid #f3f4f6; }
         .day.today { border: 2px solid var(--primary); font-weight: 800; }
         .day.present { background: #ecfdf5; color: var(--success); border-color: #10b981; }
+        .day.partial { background: #fffbeb; color: var(--warning); border-color: #f59e0b; }
         
         .tooltip { 
             visibility: hidden; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: #1f2937; color: white; padding: 10px; border-radius: 8px; width: 150px;
+            background: #1f2937; color: white; padding: 10px; border-radius: 8px; width: 160px;
             font-size: 11px; z-index: 100; opacity: 0; transition: 0.3s; box-shadow: 0 10px 15px rgba(0,0,0,0.2);
         }
         .day:hover .tooltip { visibility: visible; opacity: 1; }
@@ -68,7 +72,7 @@
 </head>
 <body>
 
-<div id="loader"><div class="loading-orbit"></div><p style="margin-top:20px; font-weight:600;">Processing Data...</p></div>
+<div id="loader"><div class="loading-orbit"></div><p style="margin-top:20px; font-weight:600;">Updating Dashboard...</p></div>
 
 <aside class="sidebar">
     <h2><i class="fas fa-bolt"></i> IMS PRO</h2>
@@ -100,25 +104,27 @@
             </div>
             
             <div class="card" style="text-align:center;">
-                <h3>Salary & Payroll</h3>
-                <p style="font-size:14px; color:#64748b; margin-top:10px;">Total Estimated Earnings this Month</p>
-                <h2 id="total-salary-display" style="color:var(--success); margin:10px 0;">₹0.00</h2>
+                <h3>Monthly Earnings</h3>
+                <h2 id="total-salary-display" style="color:var(--success); margin:10px 0; font-size: 32px;">₹0.00</h2>
                 <button class="btn btn-slip" onclick="downloadSlip()"><i class="fas fa-download"></i> Download PDF Payslip</button>
             </div>
         </div>
 
         <div class="card" style="text-align: center; height: fit-content;">
-            <p style="text-transform: uppercase; font-weight: 700; color: #94a3b8; font-size: 12px; letter-spacing: 1px;">Live Session</p>
+            <p style="text-transform: uppercase; font-weight: 700; color: #94a3b8; font-size: 12px; letter-spacing: 1px;">Current Time</p>
             <div id="clock">00:00:00</div>
+            
+            <div id="session-timer"><i class="fas fa-stopwatch"></i> Active: <span id="timer-val">00h 00m 00s</span></div>
+
             <div class="btn-stack">
                 <button id="btnIn" class="btn btn-in" onclick="markAttendance('in')">
                     <i class="fas fa-sign-in-alt"></i> Punch In
                 </button>
-                <button id="btnOut" class="btn btn-out" onclick="markAttendance('out')">
+                <button id="btnOut" class="btn btn-out" onclick="handlePunchOut()">
                     <i class="fas fa-sign-out-alt"></i> Punch Out
                 </button>
             </div>
-            <p id="footer-msg" style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Standard shift: 8 Hours</p>
+            <p id="footer-msg" style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Shift duration affects daily payout.</p>
         </div>
     </div>
 </main>
@@ -128,10 +134,13 @@
     const user = JSON.parse(localStorage.getItem("user"));
     if(!user) window.location.href = "index.html";
 
-    let globalHistory = {}; // PDF ke liye data store karega Global variable banaya hai taaki multiple functions access kar sakein
+    let globalHistory = {};
+    let timerInterval;
 
     document.getElementById('user-name').innerText = `Hello, ${user.name} 👋`;
     document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Live Clock
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
     function loadDashboard() {
@@ -153,21 +162,13 @@
     }
 
     function calculateTotalSalary(history) {
-    let total = 0;
-    if (history && Object.keys(history).length > 0) {
+        let total = 0;
         Object.values(history).forEach(day => {
-            // Salary ko number mein convert karke sum karein
             let amt = parseFloat(day.salary);
-            if (!isNaN(amt)) {
-                total += amt;
-            }
+            if (!isNaN(amt)) total += amt;
         });
+        document.getElementById('total-salary-display').innerText = `₹${total.toFixed(2)}`;
     }
-    const display = document.getElementById('total-salary-display');
-    if (display) {
-        display.innerText = `₹${total.toFixed(2)}`;
-    }
-}
 
     function renderCalendar(history) {
         const now = new Date();
@@ -187,129 +188,149 @@
         for(let d=1; d<=daysInMonth; d++) {
             let dk = `${String(d).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
             let record = history[dk];
-            let isToday = (d === now.getDate()) ? 'today' : '';
-            let isPresent = record ? 'present' : '';
+            let isToday = (d === now.getDate() && month === now.getMonth()) ? 'today' : '';
+            
+            let statusClass = '';
+            if(record) {
+                let hours = parseInt(record.duration) || 0;
+                statusClass = hours >= 8 ? 'present' : 'partial';
+            }
             
             let tooltip = record ? 
-                `<div class="tooltip"><b>Duration:</b> ${record.duration || '0h'}<br><b>Earned:</b> ₹${record.salary || '0'}</div>` : 
-                `<div class="tooltip">No Data</div>`;
+                `<div class="tooltip"><b>In:</b> ${record.in}<br><b>Out:</b> ${record.out}<br><b>Duration:</b> ${record.duration}<br><b>Earned:</b> ₹${record.salary}</div>` : 
+                `<div class="tooltip">No records found</div>`;
 
-            cal.innerHTML += `<div class="day ${isToday} ${isPresent}">${d}${tooltip}</div>`;
+            cal.innerHTML += `<div class="day ${isToday} ${statusClass}">${d}${tooltip}</div>`;
         }
     }
-
-function downloadSlip() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("Company Name", 105, 15, { align: "center" });
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Salary Slip for February 2026`, 105, 22, { align: "center" });
-    doc.line(10, 25, 200, 25);
-
-    // Info Grid
-    doc.setFontSize(10);
-    doc.text(`Name: ${user.name}`, 15, 35);
-    doc.text(`Designation: Intern`, 15, 42);
-    doc.text(`Employee ID: ${user.id}`, 15, 49);
-    doc.text(`Department: Technology`, 110, 35);
-    doc.text(`Bank Name: N/A`, 110, 42);
-    doc.text(`Account No: N/A`, 110, 49);
-    doc.line(10, 55, 200, 55);
-
-    // Calculate Total Earnings
-    let totalE = 0;
-    Object.values(globalHistory).forEach(day => {
-        totalE += parseFloat(day.salary || 0);
-    });
-
-    // Main Table as per image
-    doc.autoTable({
-        startY: 60,
-        head: [['Earnings', 'Amount', 'Deductions', 'Amount']],
-        body: [
-            ['Basic (Prorata)', totalE.toFixed(2), 'Professional Tax', '0.00'],
-            ['Dearness Allowance', '0.00', 'TDS', '0.00'],
-            ['House Rent Allowance', '0.00', 'EPF', '0.00'],
-            ['Conveyance Allowance', '0.00', '', ''],
-            ['Medical Allowance', '0.00', '', ''],
-            ['Special Allowance', '0.00', '', '']
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
-        styles: { fontSize: 9 }
-    });
-
-    // Net Salary Footer
-    const finalY = doc.lastAutoTable.finalY;
-    doc.autoTable({
-        startY: finalY,
-        body: [
-            ['Gross Salary', totalE.toFixed(2), 'Total Deduction', '0.00'],
-            ['Net Salary', `INR ${totalE.toFixed(2)}`, '', '']
-        ],
-        theme: 'grid',
-        styles: { fontStyle: 'bold', fontSize: 10 }
-    });
-
-    doc.setFontSize(8);
-    doc.text("Computer generated slip - No signature required", 105, doc.lastAutoTable.finalY + 15, { align: "center" });
-    doc.save(`SalarySlip_${user.id}.pdf`);
-}
 
     function syncButtonState(history) {
         const now = new Date();
         const todayKey = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-        const bIn = document.getElementById('btnIn'), bOut = document.getElementById('btnOut'), dot = document.getElementById('status-dot'), txt = document.getElementById('status-text');
+        const bIn = document.getElementById('btnIn'), bOut = document.getElementById('btnOut'), 
+              dot = document.getElementById('status-dot'), txt = document.getElementById('status-text'),
+              timerDiv = document.getElementById('session-timer');
+
+        clearInterval(timerInterval);
 
         if (history[todayKey]) {
             bIn.disabled = true;
             bIn.innerHTML = `<i class="fas fa-check-circle"></i> Punch In Done`;
-            dot.style.background = "var(--success)";
-            txt.innerText = "Working Online";
-
+            
             if (history[todayKey].out && history[todayKey].out !== "N/A" && history[todayKey].out !== "") {
                 bOut.disabled = true;
-                bOut.innerHTML = `<i class="fas fa-flag-checkered"></i> Attendance Submitted`;
+                bOut.innerHTML = `<i class="fas fa-flag-checkered"></i> Shift Completed`;
                 dot.style.background = "#9ca3af";
                 txt.innerText = "Shift Ended";
+                timerDiv.style.display = "none";
             } else {
                 bOut.disabled = false;
+                dot.style.background = "var(--success)";
+                txt.innerText = "Working Online";
+                startLiveTimer(history[todayKey].in);
             }
         } else {
             bIn.disabled = false;
             bOut.disabled = true;
             dot.style.background = "var(--danger)";
             txt.innerText = "Awaiting Punch-In";
+            timerDiv.style.display = "none";
         }
     }
-        // This functin need improvement and modify it in future
-    function markAttendance(type) {
+
+    function startLiveTimer(startTimeStr) {
+        const timerDiv = document.getElementById('session-timer');
+        const timerVal = document.getElementById('timer-val');
+        timerDiv.style.display = "block";
+
+        function updateTimer() {
+            const now = new Date();
+            const [h, m, s] = startTimeStr.split(':').map(Number);
+            const start = new Date();
+            start.setHours(h, m, s);
+
+            let diff = Math.floor((now - start) / 1000);
+            if (diff < 0) diff = 0;
+
+            const hours = Math.floor(diff / 3600);
+            const mins = Math.floor((diff % 3600) / 60);
+            const secs = diff % 60;
+
+            timerVal.innerText = `${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m ${String(secs).padStart(2,'0')}s`;
+        }
+        
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    async function handlePunchOut() {
+        const { value: text } = await Swal.fire({
+            title: 'Daily Work Report',
+            input: 'textarea',
+            inputLabel: 'What tasks did you complete today?',
+            inputPlaceholder: 'Write your summary here...',
+            inputAttributes: { 'aria-label': 'Type your message here' },
+            showCancelButton: true,
+            confirmButtonText: 'Submit & Punch Out',
+            confirmButtonColor: 'var(--danger)',
+            inputValidator: (value) => {
+                if (!value) return 'Please write something before leaving!'
+            }
+        });
+
+        if (text) {
+            markAttendance('out', text);
+        }
+    }
+
+    function markAttendance(type, report = "") {
         document.getElementById('loader').style.display = 'flex';
         const cb = 'jsonp_' + Date.now();
         window[cb] = function(data) {
             document.getElementById('loader').style.display = 'none';
             Swal.fire({
                 icon: data.status === "success" ? 'success' : 'warning',
-                title: data.status === "success" ? 'Done!' : 'Notice',
+                title: data.status === "success" ? 'Success!' : 'Notice',
                 text: data.message,
                 confirmButtonColor: '#6366f1'
             });
-            // this function calls the loadDashboard function to refresh the dashboard data and update the UI based on the latest attendance status. After marking attendance (either punch in or punch out), it fetches the updated history and re-renders the calendar, syncs the button states, and recalculates the total salary. This ensures that the intern sees real-time updates without needing to manually refresh the page.
             loadDashboard();
             delete window[cb];
         };
-        const s = document.createElement('script');//this line creates a new script element that will be used to make a JSONP request to the server. JSONP is a technique used to overcome cross-origin restrictions in web browsers by dynamically adding a script tag with a source URL that includes a callback function. In this case, the script's source URL is constructed with the action (attendance), type (in or out), user ID, user name, and the callback function name. When the server responds, it will execute the callback function with the response data, allowing the client-side code to handle the response accordingly.
-        s.src = `${SCRIPT_URL}?action=attendance&type=${type}&id=${user.id}&name=${encodeURIComponent(user.name)}&callback=${cb}`;
+        const s = document.createElement('script');
+        // Note: Reporting logic added to URL for backend storage
+        s.src = `${SCRIPT_URL}?action=attendance&type=${type}&id=${user.id}&name=${encodeURIComponent(user.name)}&report=${encodeURIComponent(report)}&callback=${cb}`;
         document.body.appendChild(s);
     }
-    // this function is use for logout and clear the local storage data and redirect to login page
+
+    function downloadSlip() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.text("IMS INTERN SALARY SLIP", 105, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.text(`Name: ${user.name} | ID: ${user.id}`, 15, 35);
+        
+        let totalE = 0;
+        const rows = Object.entries(globalHistory).map(([date, data]) => {
+            totalE += parseFloat(data.salary || 0);
+            return [date, data.in, data.out, data.duration, `INR ${data.salary}`];
+        });
+
+        doc.autoTable({
+            startY: 45,
+            head: [['Date', 'In', 'Out', 'Duration', 'Salary']],
+            body: rows,
+            theme: 'striped'
+        });
+
+        doc.text(`Total Monthly Payout: INR ${totalE.toFixed(2)}`, 15, doc.lastAutoTable.finalY + 15);
+        doc.save(`Slip_${user.id}.pdf`);
+    }
+
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
-    loadDashboard();//this function is called when the intern dashboard page loads. It fetches the attendance history and salary data for the logged-in intern and updates the calendar, button states, and total salary display accordingly. This ensures that the intern sees their current attendance status and earnings as soon as they access the dashboard.
+    
+    loadDashboard();
 </script>
 </body>
 </html>
