@@ -2,188 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HR Master Pro | IMS Admin</title>
+    <title>IMS Ultra Admin | All-in-One HR Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --primary: #6366f1; --success: #10b981; --warning: #f59e0b; --bg: #f8fafc; --accent: #818cf8; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); display: flex; }
+        :root { --sidebar: #0f172a; --primary: #6366f1; --success: #10b981; --warning: #f59e0b; --danger: #f43f5e; --bg: #f8fafc; --accent: #818cf8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); display: flex; overflow: hidden; }
 
         /* Sidebar */
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; color: white; padding: 25px; position: sticky; top: 0; }
-        .sidebar h2 { color: var(--accent); margin-bottom: 40px; font-size: 22px; display: flex; align-items: center; gap: 10px; }
-        .nav-link { padding: 14px; color: #94a3b8; text-decoration: none; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin-bottom: 10px; transition: 0.3s; }
-        .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar h2 { color: var(--accent); margin-bottom: 40px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .nav-link { padding: 12px 15px; color: #94a3b8; text-decoration: none; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 8px; transition: 0.3s; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { background: rgba(99, 102, 241, 0.2); color: white; }
 
-        .main { flex: 1; padding: 40px; overflow-y: auto; height: 100vh; }
-        
-        /* Stats Cards */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; }
-        .stat-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        
-        /* Layout Grid */
-        .grid-top { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; margin-bottom: 30px; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); }
+        /* Main Content */
+        .main-content { flex: 1; height: 100vh; overflow-y: auto; padding: 40px; }
+        .tab-section { display: none; animation: fadeIn 0.4s ease; }
+        .tab-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; }
-        input:focus { border-color: var(--primary); }
+        /* UI Components */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; border: 1px solid #f1f5f9; }
+        .card { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 15px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; margin-bottom: 30px; }
         
-        .btn-reg { background: var(--primary); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-        .btn-reg:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3); }
-
-        /* Tables */
-        .table-container { max-height: 400px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 12px; }
+        .table-container { border-radius: 15px; overflow: hidden; border: 1px solid #f1f5f9; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; color: #64748b; font-size: 11px; text-transform: uppercase; background: #f8fafc; position: sticky; top: 0; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         
-        /* Badges */
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge-active { background: #dcfce7; color: #15803d; }
-        .badge-pending { background: #fef9c3; color: #a16207; cursor: pointer; border: 1px solid #ca8a04; }
-        .badge-pending:hover { background: #ca8a04; color: white; }
+        .badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef9c3; color: #a16207; }
 
-        canvas { max-height: 300px; }
+        .btn-action { padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; transition: 0.3s; font-size: 13px; font-weight: 600; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: #f1f5f9; color: #64748b; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <h2><i class="fas fa-shield-alt"></i> IMS ADMIN</h2>
+        <h2><i class="fas fa-crown"></i> IMS ULTRA</h2>
         <nav>
-            <a href="#" class="nav-link active"><i class="fas fa-chart-pie"></i> Analytics</a>
-            <a href="#" class="nav-link"><i class="fas fa-users"></i> Interns</a>
-            <a href="#" class="nav-link" onclick="logout()" style="margin-top: 50vh; color: #fda4af;"><i class="fas fa-power-off"></i> Logout</a>
+            <div class="nav-link active" onclick="showTab('dashboard')"><i class="fas fa-chart-line"></i> Overview</div>
+            <div class="nav-link" onclick="showTab('interns')"><i class="fas fa-users"></i> Directory</div>
+            <div class="nav-link" onclick="showTab('attendance')"><i class="fas fa-calendar-check"></i> Attendance</div>
+            <div class="nav-link" onclick="showTab('leaves')"><i class="fas fa-envelope-open-text"></i> Leaves</div>
+            <div class="nav-link" onclick="showTab('finance')"><i class="fas fa-wallet"></i> Finance</div>
+            <div class="nav-link" onclick="showTab('docs')"><i class="fas fa-file-pdf"></i> Documents</div>
+            <div class="nav-link" onclick="logout()" style="margin-top: 20vh; color: #fda4af;"><i class="fas fa-sign-out-alt"></i> Logout</div>
         </nav>
     </aside>
 
-    <main class="main">
-        <header style="margin-bottom: 30px;">
-            <h1 id="hr-welcome">Dashboard Overview</h1>
-            <p style="color: #64748b;">Monitor intern activity and attendance trends</p>
-        </header>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #e0e7ff; color: #6366f1;"><i class="fas fa-user-graduate"></i></div>
-                <div>
-                    <p style="font-size: 13px; color: #64748b;">Total Interns</p>
-                    <h2 id="total-count">0</h2>
+    <main class="main-content">
+        <section id="dashboard" class="tab-section active">
+            <header style="margin-bottom: 30px;">
+                <h1>HR Command Center</h1>
+                <p id="live-clock" style="color: #64748b;"></p>
+            </header>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="background: #e0e7ff; color: #6366f1; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-user-graduate"></i></div>
+                    <div><p style="font-size: 12px; color: #64748b;">Interns</p><h2 id="total-interns-count">0</h2></div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #dcfce7; color: #10b981;"><i class="fas fa-clock"></i></div>
-                <div>
-                    <p style="font-size: 13px; color: #64748b;">Present Today</p>
-                    <h2 id="present-count">0</h2>
+                <div class="stat-card">
+                    <div style="background: #dcfce7; color: #10b981; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-clock"></i></div>
+                    <div><p style="font-size: 12px; color: #64748b;">Present</p><h2 id="present-today-count">0</h2></div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #fef9c3; color: #ca8a04;"><i class="fas fa-user-clock"></i></div>
-                <div>
-                    <p style="font-size: 13px; color: #64748b;">Pending Approval</p>
-                    <h2 id="pending-count">0</h2>
+                <div class="stat-card">
+                    <div style="background: #fef9c3; color: #ca8a04; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-user-clock"></i></div>
+                    <div><p style="font-size: 12px; color: #64748b;">Pending</p><h2 id="pending-approvals-count">0</h2></div>
                 </div>
-            </div>
-        </div>
-
-        <div class="grid-top">
-            <div class="card">
-                <h3><i class="fas fa-user-plus"></i> Quick Registration</h3>
-                <p style="font-size: 12px; color: #64748b; margin: 10px 0 20px;">Add new interns to the system</p>
-                <input type="text" id="name" placeholder="Full Name">
-                <input type="email" id="email" placeholder="Email Address">
-                <button class="btn-reg" onclick="register()">Create Account</button>
             </div>
             <div class="card">
-                <h3><i class="fas fa-chart-line"></i> Attendance Trend (Last 7 Days)</h3>
-                <canvas id="attendanceChart"></canvas>
+                <h3>Announcement Board</h3>
+                <p style="margin-top:10px; color:#64748b;">Welcome to the new IMS Ultra Panel. You can now manage everything from payroll to certificates here.</p>
             </div>
-        </div>
+        </section>
 
-        <div class="card" style="margin-bottom: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3><i class="fas fa-users-cog"></i> Intern Management</h3>
-                <input type="text" id="searchIntern" placeholder="Search by name or ID..." onkeyup="filterInterns()" style="width: 300px; margin-bottom: 0;">
+        <section id="interns" class="tab-section">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items: center;">
+                    <h3>Intern Management</h3>
+                    <button class="btn-action btn-primary" onclick="addIntern()">+ Register New</button>
+                </div><br>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="intern-list"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr>
-                    </thead>
-                    <tbody id="intern-list-body"></tbody>
-                </table>
-            </div>
-        </div>
+        </section>
 
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3><i class="fas fa-history"></i> Live Attendance (Today)</h3>
+        <section id="attendance" class="tab-section">
+            <div class="card">
+                <h3>Live Attendance & Work Logs</h3><br>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Name</th><th>Punch In</th><th>Punch Out</th><th>Status</th><th>Tasks</th></tr></thead>
+                        <tbody id="attendance-list"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Time In</th><th>Time Out</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="att-body"></tbody>
-                </table>
+        </section>
+
+        <section id="leaves" class="tab-section">
+            <div class="card">
+                <h3>Leave Requests</h3>
+                <p style="color:#64748b; margin-bottom:15px;">Review and approve intern absence requests.</p>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Intern</th><th>Date</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">No pending requests found.</td></tr></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section id="finance" class="tab-section">
+            <div class="card">
+                <h3>Payroll & Stipend Tracker</h3><br>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>ID</th><th>Intern Name</th><th>Estimated Earned</th><th>Payout Status</th></tr></thead>
+                        <tbody id="finance-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="docs" class="tab-section">
+            <div class="card">
+                <h3>Document Center</h3>
+                <p style="color:#64748b; margin-bottom:15px;">Generate official documents for interns.</p>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>ID</th><th>Intern Name</th><th>Joining Date</th><th>Action</th></tr></thead>
+                        <tbody id="doc-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy-zM_kG1PA3JvRZ0a77FIwXaid2gBw2NJv1buXh8yb2CQjm-jYjSGjekPWNG-sQOI/exec";
         const user = JSON.parse(localStorage.getItem("user"));
-        
         if(!user || user.role !== "HR") window.location.href = "index.html";
-        document.getElementById('hr-welcome').innerText = `Welcome back, ${user.name} 👋`;
 
-        let attendanceChart;
-
-        function initChart(labels, values) {
-            const ctx = document.getElementById('attendanceChart').getContext('2d');
-            if(attendanceChart) attendanceChart.destroy();
-            attendanceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Present Interns',
-                        data: values,
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display: false } } }
-                }
-            });
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
         function loadDashboard() {
             const cb = 'jsonp_' + Date.now();
             window[cb] = function(data) {
                 if(data.status === "success") {
-                    document.getElementById('total-count').innerText = data.totalInterns;
-                    document.getElementById('present-count').innerText = data.attendance.length;
+                    document.getElementById('total-interns-count').innerText = data.totalInterns;
+                    document.getElementById('present-today-count').innerText = data.attendance.length;
+                    document.getElementById('pending-approvals-count').innerText = data.interns.filter(i => i.status === 'Pending').length;
                     
-                    let pending = data.interns.filter(i => i.status === "Pending").length;
-                    document.getElementById('pending-count').innerText = pending;
-                    
-                    // Tables
-                    renderInternTable(data.interns);
-                    renderAttendanceTable(data.attendance);
-
-                    // Chart Update (Static for now, will be dynamic if backend supports history)
-                    initChart(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'], [5, 8, 7, 10, 12, 4, data.attendance.length]);
+                    renderInterns(data.interns);
+                    renderAttendance(data.attendance);
+                    renderFinance(data.attendance);
+                    renderDocs(data.interns);
                 }
                 delete window[cb];
             };
@@ -192,83 +180,140 @@
             document.body.appendChild(s);
         }
 
-        function renderInternTable(interns) {
-            const body = document.getElementById('intern-list-body');
-            body.innerHTML = "";
-            interns.forEach(intern => {
-                let statusClass = intern.status === "Active" ? "badge-active" : "badge-pending";
-                body.innerHTML += `<tr>
-                    <td><b>${intern.id}</b></td>
-                    <td>${intern.name}</td>
-                    <td>${intern.email || 'N/A'}</td>
-                    <td><span class="badge ${statusClass}" onclick="approveIntern('${intern.id}', '${intern.status}')">${intern.status}</span></td>
-                    <td><button style="border:none; background:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
-            });
+        function renderInterns(list) {
+            document.getElementById('intern-list').innerHTML = list.map(i => `
+                <tr>
+                    <td><b>${i.id}</b></td>
+                    <td>${i.name}</td>
+                    <td>${i.email}</td>
+                    <td><span class="badge ${i.status === 'Active' ? 'badge-success' : 'badge-warning'}">${i.status}</span></td>
+                    <td>${i.status === 'Pending' ? `<button class="btn-action btn-primary" onclick="approve('${i.id}')">Approve</button>` : `<i class="fas fa-check-circle" style="color:var(--success)"></i> Verified`}</td>
+                </tr>`).join('');
         }
 
-        function renderAttendanceTable(attendance) {
-            const body = document.getElementById('att-body');
-            body.innerHTML = "";
-            attendance.forEach(row => {
-                let isWorking = row.out === "Working";
-                body.innerHTML += `<tr>
-                    <td>${row.id}</td>
-                    <td>${row.name}</td>
-                    <td>${row.in}</td>
-                    <td>${isWorking ? '--' : row.out}</td>
-                    <td><span class="badge" style="background:${isWorking ? '#e0e7ff':'#dcfce7'}; color:${isWorking ? '#4338ca':'#15803d'}">${isWorking ? 'Active' : 'Completed'}</span></td>
-                </tr>`;
-            });
+        function renderAttendance(list) {
+            document.getElementById('attendance-list').innerHTML = list.map(a => `
+                <tr>
+                    <td>${a.name}</td>
+                    <td>${a.in}</td>
+                    <td>${a.out}</td>
+                    <td><span class="badge ${a.out === 'Working' ? 'badge-warning' : 'badge-success'}">${a.out === 'Working' ? 'Online' : 'Shift End'}</span></td>
+                    <td><button class="btn-action btn-outline" onclick="Swal.fire('Work Summary', '${a.report || 'Report not submitted.'}', 'info')"><i class="fas fa-eye"></i> View</button></td>
+                </tr>`).join('');
         }
 
-        function approveIntern(id, status) {
-            if(status === "Active") return;
-            Swal.fire({
-                title: 'Approve Intern?',
-                text: `Activate account for ${id}?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Activate'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Yahan hum setPassword wala action trigger kar sakte hain manually ya ek naya approve action
-                    Swal.fire('Approved!', 'Intern can now set their password.', 'success');
-                }
-            });
+        function renderFinance(list) {
+            document.getElementById('finance-list').innerHTML = list.map(a => `
+                <tr><td>${a.id}</td><td>${a.name}</td><td><b>INR 500.00</b></td><td><span class="badge badge-success">Active</span></td></tr>`).join('');
         }
 
-        function filterInterns() {
-            let input = document.getElementById("searchIntern").value.toUpperCase();
-            let rows = document.getElementById("intern-list-body").getElementsByTagName("tr");
-            for (let i = 0; i < rows.length; i++) {
-                let text = rows[i].innerText.toUpperCase();
-                rows[i].style.display = text.indexOf(input) > -1 ? "" : "none";
-            }
-        }
+       function renderDocs(list) {
+    const body = document.getElementById('doc-list');
+    body.innerHTML = list.filter(i => i.status === 'Active').map(i => `
+        <tr>
+            <td>${i.id}</td>
+            <td>${i.name}</td>
+            <td>${i.email}</td>
+            <td>
+                <button class="btn-action btn-primary" onclick="generateCertificate('${i.name}', '${i.id}')">
+                    <i class="fas fa-certificate"></i> Generate PDF
+                </button>
+            </td>
+        </tr>`).join('');
+}
+function generateCertificate(internName, internId) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+    });
 
-        function register() {
-            const n = document.getElementById('name').value, e = document.getElementById('email').value;
-            if(!n || !e) return Swal.fire('Error', 'Fields cannot be empty', 'error');
-            
-            Swal.fire({ title: 'Adding Intern...', didOpen: () => { Swal.showLoading(); } });
+    // --- Design Elements ---
+    // Border
+    doc.setLineWidth(2);
+    doc.rect(10, 10, 277, 190); // Main Border
+    doc.setLineWidth(0.5);
+    doc.rect(12, 12, 273, 186); // Inner Border
 
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(40);
+    doc.setTextColor(99, 102, 241); // Primary Color (#6366f1)
+    doc.text("CERTIFICATE", 148, 50, { align: "center" });
+    
+    doc.setFontSize(20);
+    doc.setTextColor(30, 41, 59);
+    doc.text("OF INTERNSHIP COMPLETION", 148, 65, { align: "center" });
+
+    // Body Text
+    doc.setFont("times", "italic");
+    doc.setFontSize(16);
+    doc.text("This is to certify that", 148, 90, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(28);
+    doc.setTextColor(15, 23, 42);
+    doc.text(internName.toUpperCase(), 148, 110, { align: "center" });
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(16);
+    doc.setTextColor(100, 116, 139);
+    const bodyText = `has successfully completed their professional internship as a Technology Intern at IMS Enterprise. Their dedication, performance, and conduct during the tenure were exemplary.`;
+    const splitText = doc.splitTextToSize(bodyText, 220);
+    doc.text(splitText, 148, 130, { align: "center" });
+
+    // Footer Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Intern ID: ${internId}`, 40, 170);
+    doc.text(`Issue Date: ${new Date().toLocaleDateString()}`, 40, 178);
+
+    // Signatures
+    doc.line(200, 170, 250, 170); // Signature line
+    doc.text("Authorized Signatory", 225, 178, { align: "center" });
+    doc.text("IMS Enterprise HR Team", 225, 185, { align: "center" });
+
+    // --- Download ---
+    Swal.fire({
+        title: 'Success!',
+        text: `Certificate for ${internName} is ready.`,
+        icon: 'success',
+        confirmButtonColor: '#6366f1'
+    });
+    
+    doc.save(`Certificate_${internId}.pdf`);
+}
+
+        async function approve(id) {
+            Swal.fire({ title: 'Activating...', didOpen: () => Swal.showLoading() });
             const cb = 'jsonp_' + Date.now();
-            window[cb] = function(data) {
-                Swal.fire('Success!', `Intern ID: ${data.generatedId}`, 'success');
-                document.getElementById('name').value = ""; document.getElementById('email').value = "";
-                loadDashboard();
-                delete window[cb];
-            };
+            window[cb] = (d) => { Swal.fire('Activated!', '', 'success'); loadDashboard(); };
             const s = document.createElement('script');
-            s.src = `${SCRIPT_URL}?action=createIntern&name=${encodeURIComponent(n)}&email=${encodeURIComponent(e)}&callback=${cb}`;
+            s.src = `${SCRIPT_URL}?action=setPassword&id=${id}&newPass=&callback=${cb}`;
             document.body.appendChild(s);
         }
 
+        async function addIntern() {
+            const { value: form } = await Swal.fire({
+                title: 'New Intern',
+                html: '<input id="n" class="swal2-input" placeholder="Name"><input id="e" class="swal2-input" placeholder="Email">',
+                preConfirm: () => [document.getElementById('n').value, document.getElementById('e').value]
+            });
+            if(form && form[0]) {
+                const cb = 'jsonp_' + Date.now();
+                window[cb] = (d) => { Swal.fire('Registered!', `ID: ${d.generatedId}`, 'success'); loadDashboard(); };
+                const s = document.createElement('script');
+                s.src = `${SCRIPT_URL}?action=createIntern&name=${encodeURIComponent(form[0])}&email=${encodeURIComponent(form[1])}&callback=${cb}`;
+                document.body.appendChild(s);
+            }
+        }
+
+
         function logout() { localStorage.clear(); window.location.href = "index.html"; }
-        
+        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
         loadDashboard();
-        setInterval(loadDashboard, 60000); 
+        setInterval(loadDashboard, 60000);
     </script>
 </body>
 </html>
