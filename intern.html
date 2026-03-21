@@ -45,6 +45,10 @@
         .grid { display: grid; grid-template-columns: 1.8fr 1fr; gap: 25px; }
         .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; border: 1px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
+        /* Calendar Navigation Styles */
+        .cal-nav-btn { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: 0.2s; color: var(--sidebar); }
+        .cal-nav-btn:hover { background: var(--primary); color: white; }
+        
         #clock { font-size: 48px; font-weight: 800; color: var(--primary); margin: 10px 0; font-variant-numeric: tabular-nums; }
         #session-timer { font-size: 18px; font-weight: 600; color: var(--success); margin-bottom: 20px; display: none; }
         
@@ -96,15 +100,19 @@
     <div class="grid">
         <div class="left-col">
             <div class="card">
-                <div class="cal-header" style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <h3 id="current-month">Month Year</h3>
+                <div class="cal-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <h3 id="current-month" style="min-width: 140px; text-align: center;">Month Year</h3>
+                        <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                     <span style="font-size:12px; color:var(--success); font-weight:700;">Rate: ₹500/8hr</span>
                 </div>
                 <div class="calendar-grid" id="calendar-body"></div>
             </div>
             
             <div class="card" style="text-align:center;">
-                <h3>Monthly Earnings</h3>
+                <h3>Total Earnings</h3>
                 <h2 id="total-salary-display" style="color:var(--success); margin:10px 0; font-size: 32px;">₹0.00</h2>
                 <button class="btn btn-slip" onclick="downloadSlip()"><i class="fas fa-download"></i> Download PDF Payslip</button>
             </div>
@@ -124,7 +132,7 @@
                     <i class="fas fa-sign-out-alt"></i> Punch Out
                 </button>
             </div>
-            <p id="footer-msg" style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Shift duration affects daily payout.</p>
+            <p id="footer-msg" style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Daily performance updates here.</p>
         </div>
     </div>
 </main>
@@ -136,11 +144,13 @@
 
     let globalHistory = {};
     let timerInterval;
+    
+    // Calendar Navigation State
+    let currentViewDate = new Date();
 
     document.getElementById('user-name').innerText = `Hello, ${user.name} 👋`;
     document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Live Clock
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
     function loadDashboard() {
@@ -150,9 +160,9 @@
             document.getElementById('loader').style.display = 'none';
             if(data.status === "success") {
                 globalHistory = data.history;
-                renderCalendar(data.history);
-                syncButtonState(data.history);
-                calculateTotalSalary(data.history);
+                renderCalendar(globalHistory);
+                syncButtonState(globalHistory);
+                calculateTotalSalary(globalHistory);
             }
             delete window[cb];
         };
@@ -163,6 +173,8 @@
 
     function calculateTotalSalary(history) {
         let total = 0;
+        // Calculation logic for current month viewed or total? 
+        // Showing total of all history for now.
         Object.values(history).forEach(day => {
             let amt = parseFloat(day.salary);
             if (!isNaN(amt)) total += amt;
@@ -170,35 +182,45 @@
         document.getElementById('total-salary-display').innerText = `₹${total.toFixed(2)}`;
     }
 
+    // New Function to handle month changes
+    function changeMonth(offset) {
+        currentViewDate.setMonth(currentViewDate.getMonth() + offset);
+        renderCalendar(globalHistory);
+    }
+
     function renderCalendar(history) {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        document.getElementById('current-month').innerText = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const viewYear = currentViewDate.getFullYear();
+        const viewMonth = currentViewDate.getMonth();
+        const today = new Date();
+
+        document.getElementById('current-month').innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
         const cal = document.getElementById('calendar-body');
         cal.innerHTML = "";
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => cal.innerHTML += `<div class="day-label">${d}</div>`);
 
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
         for(let i=0; i<firstDay; i++) cal.innerHTML += `<div></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
-            let dk = `${String(d).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
+            let dk = `${String(d).padStart(2,'0')}/${String(viewMonth+1).padStart(2,'0')}/${viewYear}`;
             let record = history[dk];
-            let isToday = (d === now.getDate() && month === now.getMonth()) ? 'today' : '';
+            
+            let isToday = (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()) ? 'today' : '';
             
             let statusClass = '';
             if(record) {
-                let hours = parseInt(record.duration) || 0;
+                // Parse duration like "2h 30m"
+                let hMatch = record.duration.match(/(\d+)h/);
+                let hours = hMatch ? parseInt(hMatch[1]) : 0;
                 statusClass = hours >= 8 ? 'present' : 'partial';
             }
             
             let tooltip = record ? 
                 `<div class="tooltip"><b>In:</b> ${record.in}<br><b>Out:</b> ${record.out}<br><b>Duration:</b> ${record.duration}<br><b>Earned:</b> ₹${record.salary}</div>` : 
-                `<div class="tooltip">No records found</div>`;
+                `<div class="tooltip">No record</div>`;
 
             cal.innerHTML += `<div class="day ${isToday} ${statusClass}">${d}${tooltip}</div>`;
         }
@@ -245,9 +267,10 @@
 
         function updateTimer() {
             const now = new Date();
-            const [h, m, s] = startTimeStr.split(':').map(Number);
+            // Assuming HH:mm:ss format from Sheet
+            const parts = startTimeStr.split(':');
             const start = new Date();
-            start.setHours(h, m, s);
+            start.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2] || 0));
 
             let diff = Math.floor((now - start) / 1000);
             if (diff < 0) diff = 0;
@@ -265,22 +288,19 @@
 
     async function handlePunchOut() {
         const { value: text } = await Swal.fire({
-            title: 'Daily Work Report',
+            title: 'Daily Task Report',
             input: 'textarea',
-            inputLabel: 'What tasks did you complete today?',
-            inputPlaceholder: 'Write your summary here...',
-            inputAttributes: { 'aria-label': 'Type your message here' },
+            inputLabel: 'What did you work on today?',
+            inputPlaceholder: 'Enter your task summary...',
             showCancelButton: true,
             confirmButtonText: 'Submit & Punch Out',
             confirmButtonColor: 'var(--danger)',
             inputValidator: (value) => {
-                if (!value) return 'Please write something before leaving!'
+                if (!value) return 'Work report is mandatory!'
             }
         });
 
-        if (text) {
-            markAttendance('out', text);
-        }
+        if (text) markAttendance('out', text);
     }
 
     function markAttendance(type, report = "") {
@@ -290,7 +310,7 @@
             document.getElementById('loader').style.display = 'none';
             Swal.fire({
                 icon: data.status === "success" ? 'success' : 'warning',
-                title: data.status === "success" ? 'Success!' : 'Notice',
+                title: data.status === "success" ? 'Done!' : 'Notice',
                 text: data.message,
                 confirmButtonColor: '#6366f1'
             });
@@ -298,7 +318,6 @@
             delete window[cb];
         };
         const s = document.createElement('script');
-        // Note: Reporting logic added to URL for backend storage
         s.src = `${SCRIPT_URL}?action=attendance&type=${type}&id=${user.id}&name=${encodeURIComponent(user.name)}&report=${encodeURIComponent(report)}&callback=${cb}`;
         document.body.appendChild(s);
     }
@@ -307,9 +326,10 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
-        doc.text("IMS INTERN SALARY SLIP", 105, 20, { align: "center" });
+        doc.text("INTERNSHIP SALARY SLIP", 105, 20, { align: "center" });
         doc.setFontSize(10);
         doc.text(`Name: ${user.name} | ID: ${user.id}`, 15, 35);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 15, 42);
         
         let totalE = 0;
         const rows = Object.entries(globalHistory).map(([date, data]) => {
@@ -318,14 +338,14 @@
         });
 
         doc.autoTable({
-            startY: 45,
-            head: [['Date', 'In', 'Out', 'Duration', 'Salary']],
+            startY: 50,
+            head: [['Date', 'In', 'Out', 'Duration', 'Earned']],
             body: rows,
-            theme: 'striped'
+            theme: 'grid'
         });
 
-        doc.text(`Total Monthly Payout: INR ${totalE.toFixed(2)}`, 15, doc.lastAutoTable.finalY + 15);
-        doc.save(`Slip_${user.id}.pdf`);
+        doc.text(`Net Payable Amount: INR ${totalE.toFixed(2)}`, 15, doc.lastAutoTable.finalY + 15);
+        doc.save(`SalarySlip_${user.id}.pdf`);
     }
 
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
