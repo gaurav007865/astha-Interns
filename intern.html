@@ -6,144 +6,72 @@
     <title>Pro Intern Dashboard | IMS</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.8);
-            --primary: #6366f1;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #f43f5e;
-            --sidebar: #1e1b4b;
-            --bg: #f3f4f6;
-        }
-
+        :root { --primary: #6366f1; --success: #10b981; --danger: #f43f5e; --sidebar: #1e1b4b; --bg: #f3f4f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); display: flex; color: #1f2937; min-height: 100vh; }
-
-        #loader {
-            position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.9);
-            z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column;
-        }
-        .loading-orbit {
-            width: 60px; height: 60px; border: 4px solid #ddd; border-top: 4px solid var(--primary);
-            border-radius: 50%; animation: orbit 1s linear infinite;
-        }
-        @keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; color: white; padding: 30px 20px; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .sidebar h2 { font-size: 24px; margin-bottom: 40px; color: #a5b4fc; display: flex; align-items: center; gap: 10px; }
-        .nav-item { padding: 14px 18px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.3s; cursor: pointer; }
-        .nav-item.active, .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-
-        .main { flex: 1; padding: 40px; max-width: 1200px; margin: 0 auto; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .user-profile { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-
-        .grid { display: grid; grid-template-columns: 1.8fr 1fr; gap: 25px; }
-        .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; border: 1px solid white; box-shadow: 0 10px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-
-        #clock { font-size: 48px; font-weight: 800; color: var(--primary); margin: 10px 0; font-variant-numeric: tabular-nums; }
-        #session-timer { font-size: 20px; font-weight: 700; color: var(--success); margin-bottom: 20px; display: none; background: #f0fdf4; padding: 10px; border-radius: 12px; border: 1px solid #dcfce7; }
-        
-        .btn-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .btn { padding: 16px; border: none; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        body { background: var(--bg); display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: var(--sidebar); color: white; padding: 30px 20px; position: sticky; top: 0; height: 100vh; }
+        .main { flex: 1; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        #clock { font-size: 40px; font-weight: 800; color: var(--primary); margin: 15px 0; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; font-size: 16px; }
         .btn-in { background: var(--success); color: white; }
-        .btn-out { background: var(--danger); color: white; display: none; } /* Initially hidden */
-        .btn-leave { background: var(--warning); color: white; margin-top: 10px; }
-        .btn:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; }
-
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-label { font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; text-align: center; }
-        .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: white; border: 1px solid #f3f4f6; position: relative; }
-        .day.today { border: 2.5px solid var(--primary); font-weight: 800; }
-        .day.present { background: #ecfdf5; color: var(--success); border-color: #10b981; }
-        .day.partial { background: #fffbeb; color: var(--warning); border-color: #f59e0b; }
-        
-        .tooltip { visibility: hidden; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px; border-radius: 10px; width: 180px; font-size: 11px; z-index: 100; transition: 0.3s; }
-        .day:hover .tooltip { visibility: visible; }
+        .btn-out { background: var(--danger); color: white; display: none; }
+        #loader { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .status-badge { padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eee; }
     </style>
 </head>
 <body>
 
-<div id="loader"><div class="loading-orbit"></div><p style="margin-top:20px; font-weight:600;">Updating Dashboard...</p></div>
+<div id="loader"><div class="spinner">Loading...</div></div>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-bolt"></i> IMS PRO</h2>
-    <div class="nav-item active"><i class="fas fa-home"></i> Dashboard</div>
-    <div class="nav-item" onclick="applyLeave()"><i class="fas fa-envelope-open-text"></i> Apply Leave</div>
-    <div class="nav-item" onclick="downloadSlip()"><i class="fas fa-file-invoice-dollar"></i> Salary Slip</div>
-    <div class="nav-item" onclick="logout()" style="margin-top: 40vh; color: #fca5a5;"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    <h2>IMS PRO</h2>
+    <div style="margin-top:40px;">
+        <p style="color:#94a3b8; font-size:12px;">MAIN MENU</p><br>
+        <div style="color:white;"><i class="fas fa-home"></i> Dashboard</div>
+    </div>
 </aside>
 
 <main class="main">
-    <div class="top-bar">
-        <div>
-            <h1 id="user-name">Welcome</h1>
-            <p id="today-date" style="color: #64748b;"></p>
-        </div>
-        <div class="user-profile">
-            <span id="status-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;"></span>
-            <span id="status-text" style="font-weight: 600;">Offline</span>
-        </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+        <h1 id="user-name">Welcome</h1>
+        <div id="status-box" class="status-badge">Offline</div>
     </div>
 
-    <div class="grid">
-        <div class="left-col">
+    <div style="display:grid; grid-template-columns: 1fr 350px; gap:25px;">
+        <div>
             <div class="card">
-                <div class="cal-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <h3 id="current-month">Month Year</h3>
-                        <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                </div>
-                <div class="calendar-grid" id="calendar-body"></div>
-            </div>
-            
-            <div class="card" style="text-align:center;">
-                <h3>Total Earnings</h3>
-                <h2 id="total-salary-display" style="color:var(--success); font-size: 36px;">₹0.00</h2>
+                <h3>My Attendance History</h3>
+                <p style="color:#64748b;">Daily logs will appear here.</p>
             </div>
         </div>
 
-        <div class="card" style="text-align: center;">
-            <p style="text-transform: uppercase; font-weight: 700; color: #94a3b8; font-size: 12px;">Live Timer</p>
+        <div class="card">
+            <p>LIVE TIME</p>
             <div id="clock">00:00:00</div>
-            <div id="session-timer"><i class="fas fa-stopwatch fa-spin"></i> <span id="timer-val">00h 00m 00s</span></div>
-
-            <div class="btn-stack">
-                <button id="btnIn" class="btn btn-in" onclick="markAttendance('in')">
-                    <i class="fas fa-sign-in-alt"></i> Punch In
-                </button>
-                <button id="btnOut" class="btn btn-out" onclick="handlePunchOut()">
-                    <i class="fas fa-sign-out-alt"></i> Punch Out
-                </button>
-            </div>
+            <div id="timer-display" style="color:var(--success); font-weight:700; margin-bottom:15px; display:none;">Active Session...</div>
+            
+            <button id="btnIn" class="btn btn-in" onclick="markAttendance('in')">PUNCH IN</button>
+            <button id="btnOut" class="btn btn-out" onclick="askReport()">PUNCH OUT</button>
+            
+            <p id="msg" style="margin-top:15px; font-size:12px; color:#94a3b8;"></p>
         </div>
     </div>
 </main>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQ1IjpSd4WlLCTNyw6nD_zRVhIWofMwmyb_p3yCl_8Jn92eQMrCLkeY4_UsaE8GF0x/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKzfrVrpBoNY6iMUEPwf2noorCgAUus-wCPspDjV3jqb4l-1peItRMJD08sI_SMhkM/exec";
     const user = JSON.parse(localStorage.getItem("user"));
     if(!user) window.location.href = "index.html";
 
-    function getTodayKey(date = new Date()) {
-        const d = String(date.getDate()).padStart(2, '0');
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const y = date.getFullYear();
-        return `${d}/${m}/${y}`;
+    function getTodayKey() {
+        const now = new Date();
+        return `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
     }
 
-    let globalHistory = {};
-    let timerInterval;
-    let currentViewDate = new Date();
-
     document.getElementById('user-name').innerText = `Hello, ${user.name} 👋`;
-    document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
     function loadDashboard() {
@@ -152,10 +80,8 @@
         window[cb] = function(data) {
             document.getElementById('loader').style.display = 'none';
             if(data.status === "success") {
-                globalHistory = data.history;
-                renderCalendar(globalHistory);
-                syncButtonState(globalHistory);
-                calculateTotalSalary(globalHistory);
+                const todayRecord = data.history[getTodayKey()];
+                syncUI(todayRecord);
             }
             delete window[cb];
         };
@@ -164,60 +90,29 @@
         document.body.appendChild(s);
     }
 
-    function syncButtonState(history) {
+    function syncUI(record) {
         const bIn = document.getElementById('btnIn');
         const bOut = document.getElementById('btnOut');
-        const dot = document.getElementById('status-dot');
-        const txt = document.getElementById('status-text');
-        const timerDiv = document.getElementById('session-timer');
+        const st = document.getElementById('status-box');
 
-        clearInterval(timerInterval);
-        const todayKey = getTodayKey();
-        const todayRecord = history[todayKey];
-
-        if (todayRecord) {
-            bIn.style.display = "none";
-            bOut.style.display = "flex";
-            
-            if (todayRecord.out && todayRecord.out !== "Working" && todayRecord.out !== "") {
+        if(record) {
+            if(record.out !== "Working") {
+                bIn.style.display = "none";
+                bOut.style.display = "block";
                 bOut.disabled = true;
-                bOut.innerHTML = `<i class="fas fa-check-double"></i> Shift Ended`;
-                dot.style.background = "#9ca3af";
-                txt.innerText = "Offline";
-                timerDiv.style.display = "none";
+                bOut.innerText = "SHIFT COMPLETED";
+                st.innerText = "Offline";
             } else {
-                bOut.disabled = false;
-                dot.style.background = "var(--success)";
-                txt.innerText = "Active";
-                startLiveTimer(todayRecord.in);
+                bIn.style.display = "none";
+                bOut.style.display = "block";
+                st.innerText = "Online / Working";
+                st.style.background = "#dcfce7";
+                st.style.color = "#15803d";
             }
         } else {
-            bIn.style.display = "flex";
-            bIn.disabled = false;
+            bIn.style.display = "block";
             bOut.style.display = "none";
-            dot.style.background = "var(--danger)";
-            txt.innerText = "Offline";
-            timerDiv.style.display = "none";
         }
-    }
-
-    function startLiveTimer(startTimeStr) {
-        const timerDiv = document.getElementById('session-timer');
-        const timerVal = document.getElementById('timer-val');
-        timerDiv.style.display = "block";
-
-        function updateTimer() {
-            const now = new Date();
-            const parts = startTimeStr.split(':');
-            const start = new Date();
-            start.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2] || 0));
-            let diff = Math.floor((now - start) / 1000);
-            if (diff < 0) diff = 0;
-            const h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
-            timerVal.innerText = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-        }
-        updateTimer();
-        timerInterval = setInterval(updateTimer, 1000);
     }
 
     function markAttendance(type, report = "") {
@@ -225,13 +120,8 @@
         const cb = 'jsonp_' + Date.now();
         window[cb] = function(data) {
             document.getElementById('loader').style.display = 'none';
-            if(data.status === "success") {
-                Swal.fire('Success', data.message, 'success').then(() => {
-                    location.reload(); // FORCE RELOAD TO SYNC BUTTONS
-                });
-            } else {
-                Swal.fire('Error', data.message, 'error');
-            }
+            Swal.fire(data.status === "success" ? 'Success' : 'Error', data.message, data.status);
+            if(data.status === "success") loadDashboard();
             delete window[cb];
         };
         const s = document.createElement('script');
@@ -239,40 +129,16 @@
         document.body.appendChild(s);
     }
 
-    async function handlePunchOut() {
+    async function askReport() {
         const { value: text } = await Swal.fire({
-            title: 'Daily Report',
+            title: 'Work Report',
             input: 'textarea',
             inputPlaceholder: 'What did you do today?',
-            showCancelButton: true,
-            inputValidator: (v) => !v && 'Report is required!'
+            inputValidator: (v) => !v && 'Please write a report!'
         });
         if (text) markAttendance('out', text);
     }
 
-    function renderCalendar(history) {
-        const viewYear = currentViewDate.getFullYear(), viewMonth = currentViewDate.getMonth();
-        document.getElementById('current-month').innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-        const cal = document.getElementById('calendar-body');
-        cal.innerHTML = "";
-        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => cal.innerHTML += `<div class="day-label">${d}</div>`);
-        const firstDay = new Date(viewYear, viewMonth, 1).getDay(), daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-        for(let i=0; i<firstDay; i++) cal.innerHTML += `<div></div>`;
-        for(let d=1; d<=daysInMonth; d++) {
-            const dk = getTodayKey(new Date(viewYear, viewMonth, d));
-            const record = history[dk];
-            let status = record ? (record.duration.includes('8h') || parseInt(record.duration) >= 8 ? 'present' : 'partial') : '';
-            cal.innerHTML += `<div class="day ${dk === getTodayKey() ? 'today' : ''} ${status}">${d}</div>`;
-        }
-    }
-
-    function calculateTotalSalary(history) {
-        let total = 0;
-        Object.values(history).forEach(day => { total += parseFloat(day.salary || 0); });
-        document.getElementById('total-salary-display').innerText = `₹${total.toFixed(2)}`;
-    }
-
-    function changeMonth(offset) { currentViewDate.setMonth(currentViewDate.getMonth() + offset); renderCalendar(globalHistory); }
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
     loadDashboard();
 </script>
