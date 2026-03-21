@@ -33,8 +33,8 @@
         }
         @keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .sidebar { width: 280px; background: var(--sidebar); color: white; padding: 30px 20px; position: sticky; top: 0; height: 100vh; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .sidebar h2 { font-size: 24px; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; color: #a5b4fc; }
+        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; color: white; padding: 30px 20px; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+        .sidebar h2 { font-size: 24px; margin-bottom: 40px; color: #a5b4fc; display: flex; align-items: center; gap: 10px; }
         .nav-item { padding: 14px 18px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.3s; cursor: pointer; }
         .nav-item.active, .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
 
@@ -43,47 +43,39 @@
         .user-profile { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
         .grid { display: grid; grid-template-columns: 1.8fr 1fr; gap: 25px; }
-        .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; border: 1px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; border: 1px solid white; box-shadow: 0 10px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-        /* Timer UI */
         #clock { font-size: 48px; font-weight: 800; color: var(--primary); margin: 10px 0; font-variant-numeric: tabular-nums; }
         #session-timer { font-size: 20px; font-weight: 700; color: var(--success); margin-bottom: 20px; display: none; background: #f0fdf4; padding: 10px; border-radius: 12px; border: 1px solid #dcfce7; }
         
         .btn-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .btn { padding: 16px; border: none; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-in { background: var(--success); color: white; }
-        .btn-out { background: var(--danger); color: white; }
-        .btn-slip { background: var(--primary); color: white; margin-top: 15px; width: 100%; }
-        .btn:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; transform: none !important; }
-
-        /* Calendar Nav */
-        .cal-nav-btn { background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer; color: var(--sidebar); }
-        .cal-nav-btn:hover { background: var(--primary); color: white; }
+        .btn-out { background: var(--danger); color: white; display: none; } /* Initially hidden */
+        .btn-leave { background: var(--warning); color: white; margin-top: 10px; }
+        .btn:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-label { font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; text-align: center; padding-bottom: 10px; }
-        .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: white; font-size: 14px; position: relative; cursor: pointer; transition: 0.2s; border: 1px solid #f3f4f6; }
+        .day-label { font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; text-align: center; }
+        .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: white; border: 1px solid #f3f4f6; position: relative; }
         .day.today { border: 2.5px solid var(--primary); font-weight: 800; }
         .day.present { background: #ecfdf5; color: var(--success); border-color: #10b981; }
         .day.partial { background: #fffbeb; color: var(--warning); border-color: #f59e0b; }
         
-        .tooltip { 
-            visibility: hidden; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: #1f2937; color: white; padding: 12px; border-radius: 10px; width: 180px;
-            font-size: 11px; z-index: 100; opacity: 0; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        .day:hover .tooltip { visibility: visible; opacity: 1; }
+        .tooltip { visibility: hidden; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px; border-radius: 10px; width: 180px; font-size: 11px; z-index: 100; transition: 0.3s; }
+        .day:hover .tooltip { visibility: visible; }
     </style>
 </head>
 <body>
 
-<div id="loader"><div class="loading-orbit"></div><p style="margin-top:20px; font-weight:600;">Syncing Dashboard...</p></div>
+<div id="loader"><div class="loading-orbit"></div><p style="margin-top:20px; font-weight:600;">Updating Dashboard...</p></div>
 
 <aside class="sidebar">
     <h2><i class="fas fa-bolt"></i> IMS PRO</h2>
     <div class="nav-item active"><i class="fas fa-home"></i> Dashboard</div>
+    <div class="nav-item" onclick="applyLeave()"><i class="fas fa-envelope-open-text"></i> Apply Leave</div>
     <div class="nav-item" onclick="downloadSlip()"><i class="fas fa-file-invoice-dollar"></i> Salary Slip</div>
-    <div class="nav-item" onclick="logout()" style="margin-top: 50vh; color: #fca5a5;"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    <div class="nav-item" onclick="logout()" style="margin-top: 40vh; color: #fca5a5;"><i class="fas fa-sign-out-alt"></i> Logout</div>
 </aside>
 
 <main class="main">
@@ -94,7 +86,7 @@
         </div>
         <div class="user-profile">
             <span id="status-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;"></span>
-            <span id="status-text" style="font-weight: 600; font-size: 14px;">Offline</span>
+            <span id="status-text" style="font-weight: 600;">Offline</span>
         </div>
     </div>
 
@@ -104,25 +96,22 @@
                 <div class="cal-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <h3 id="current-month" style="min-width: 150px; text-align: center;">Month Year</h3>
+                        <h3 id="current-month">Month Year</h3>
                         <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
                     </div>
-                    <span style="font-size:12px; color:var(--success); font-weight:700;">Rate: ₹500/8hr</span>
                 </div>
                 <div class="calendar-grid" id="calendar-body"></div>
             </div>
             
             <div class="card" style="text-align:center;">
                 <h3>Total Earnings</h3>
-                <h2 id="total-salary-display" style="color:var(--success); margin:10px 0; font-size: 36px;">₹0.00</h2>
-                <button class="btn btn-slip" onclick="downloadSlip()"><i class="fas fa-download"></i> Download PDF Payslip</button>
+                <h2 id="total-salary-display" style="color:var(--success); font-size: 36px;">₹0.00</h2>
             </div>
         </div>
 
-        <div class="card" style="text-align: center; height: fit-content;">
-            <p style="text-transform: uppercase; font-weight: 700; color: #94a3b8; font-size: 12px; letter-spacing: 1.5px;">Current Time</p>
+        <div class="card" style="text-align: center;">
+            <p style="text-transform: uppercase; font-weight: 700; color: #94a3b8; font-size: 12px;">Live Timer</p>
             <div id="clock">00:00:00</div>
-            
             <div id="session-timer"><i class="fas fa-stopwatch fa-spin"></i> <span id="timer-val">00h 00m 00s</span></div>
 
             <div class="btn-stack">
@@ -133,15 +122,21 @@
                     <i class="fas fa-sign-out-alt"></i> Punch Out
                 </button>
             </div>
-            <p id="footer-msg" style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Reports must be submitted daily.</p>
         </div>
     </div>
 </main>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxPE2nyrzSikOjOcpFoy9sYHPcqHXJXU0ifKdOotg0YByq0G5wAZcQ59C_n1I8TyyD/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQ1IjpSd4WlLCTNyw6nD_zRVhIWofMwmyb_p3yCl_8Jn92eQMrCLkeY4_UsaE8GF0x/exec";
     const user = JSON.parse(localStorage.getItem("user"));
     if(!user) window.location.href = "index.html";
+
+    function getTodayKey(date = new Date()) {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+    }
 
     let globalHistory = {};
     let timerInterval;
@@ -149,7 +144,6 @@
 
     document.getElementById('user-name').innerText = `Hello, ${user.name} 👋`;
     document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
     function loadDashboard() {
@@ -170,86 +164,39 @@
         document.body.appendChild(s);
     }
 
-    function calculateTotalSalary(history) {
-        let total = 0;
-        Object.values(history).forEach(day => {
-            let amt = parseFloat(day.salary);
-            if (!isNaN(amt)) total += amt;
-        });
-        document.getElementById('total-salary-display').innerText = `₹${total.toFixed(2)}`;
-    }
-
-    function changeMonth(offset) {
-        currentViewDate.setMonth(currentViewDate.getMonth() + offset);
-        renderCalendar(globalHistory);
-    }
-
-    function renderCalendar(history) {
-        const viewYear = currentViewDate.getFullYear();
-        const viewMonth = currentViewDate.getMonth();
-        const today = new Date();
-
-        document.getElementById('current-month').innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-        const cal = document.getElementById('calendar-body');
-        cal.innerHTML = "";
-        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => cal.innerHTML += `<div class="day-label">${d}</div>`);
-
-        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-
-        for(let i=0; i<firstDay; i++) cal.innerHTML += `<div></div>`;
-
-        for(let d=1; d<=daysInMonth; d++) {
-            let dk = `${String(d).padStart(2,'0')}/${String(viewMonth+1).padStart(2,'0')}/${viewYear}`;
-            let record = history[dk];
-            let isToday = (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()) ? 'today' : '';
-            
-            let statusClass = '';
-            if(record) {
-                let hMatch = record.duration.match(/(\d+)h/);
-                let hours = hMatch ? parseInt(hMatch[1]) : 0;
-                statusClass = hours >= 8 ? 'present' : 'partial';
-            }
-            
-            let tooltip = record ? 
-                `<div class="tooltip"><b>In:</b> ${record.in}<br><b>Out:</b> ${record.out}<br><b>Duration:</b> ${record.duration}<br><b>Report:</b> ${record.report || 'N/A'}</div>` : 
-                `<div class="tooltip">No data for this date</div>`;
-
-            cal.innerHTML += `<div class="day ${isToday} ${statusClass}">${d}${tooltip}</div>`;
-        }
-    }
-
     function syncButtonState(history) {
-        const now = new Date();
-        const todayKey = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-        const bIn = document.getElementById('btnIn'), bOut = document.getElementById('btnOut'), 
-              dot = document.getElementById('status-dot'), txt = document.getElementById('status-text'),
-              timerDiv = document.getElementById('session-timer');
+        const bIn = document.getElementById('btnIn');
+        const bOut = document.getElementById('btnOut');
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-text');
+        const timerDiv = document.getElementById('session-timer');
 
         clearInterval(timerInterval);
+        const todayKey = getTodayKey();
+        const todayRecord = history[todayKey];
 
-        if (history[todayKey]) {
-            bIn.disabled = true;
-            bIn.innerHTML = `<i class="fas fa-check-circle"></i> Punch In Done`;
+        if (todayRecord) {
+            bIn.style.display = "none";
+            bOut.style.display = "flex";
             
-            if (history[todayKey].out && history[todayKey].out !== "N/A" && history[todayKey].out !== "") {
+            if (todayRecord.out && todayRecord.out !== "Working" && todayRecord.out !== "") {
                 bOut.disabled = true;
-                bOut.innerHTML = `<i class="fas fa-flag-checkered"></i> Attendance Completed`;
+                bOut.innerHTML = `<i class="fas fa-check-double"></i> Shift Ended`;
                 dot.style.background = "#9ca3af";
-                txt.innerText = "Shift Ended";
+                txt.innerText = "Offline";
                 timerDiv.style.display = "none";
             } else {
                 bOut.disabled = false;
                 dot.style.background = "var(--success)";
-                txt.innerText = "Working Online";
-                startLiveTimer(history[todayKey].in);
+                txt.innerText = "Active";
+                startLiveTimer(todayRecord.in);
             }
         } else {
+            bIn.style.display = "flex";
             bIn.disabled = false;
-            bOut.disabled = true;
+            bOut.style.display = "none";
             dot.style.background = "var(--danger)";
-            txt.innerText = "Awaiting Punch-In";
+            txt.innerText = "Offline";
             timerDiv.style.display = "none";
         }
     }
@@ -264,36 +211,13 @@
             const parts = startTimeStr.split(':');
             const start = new Date();
             start.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2] || 0));
-
             let diff = Math.floor((now - start) / 1000);
             if (diff < 0) diff = 0;
-
-            const hours = Math.floor(diff / 3600);
-            const mins = Math.floor((diff % 3600) / 60);
-            const secs = diff % 60;
-
-            timerVal.innerText = `${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m ${String(secs).padStart(2,'0')}s`;
+            const h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+            timerVal.innerText = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
         }
-        
         updateTimer();
         timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    async function handlePunchOut() {
-        const { value: text } = await Swal.fire({
-            title: 'Daily Work Report',
-            input: 'textarea',
-            inputLabel: 'Provide a brief summary of tasks completed today',
-            inputPlaceholder: 'E.g. Fixed login bugs, developed UI for dashboard...',
-            showCancelButton: true,
-            confirmButtonText: 'Submit & Punch Out',
-            confirmButtonColor: 'var(--danger)',
-            inputValidator: (value) => {
-                if (!value) return 'Task report is mandatory for checkout!'
-            }
-        });
-
-        if (text) markAttendance('out', text);
     }
 
     function markAttendance(type, report = "") {
@@ -301,13 +225,13 @@
         const cb = 'jsonp_' + Date.now();
         window[cb] = function(data) {
             document.getElementById('loader').style.display = 'none';
-            Swal.fire({
-                icon: data.status === "success" ? 'success' : 'warning',
-                title: data.status === "success" ? 'Success!' : 'Error',
-                text: data.message,
-                confirmButtonColor: '#6366f1'
-            });
-            loadDashboard();
+            if(data.status === "success") {
+                Swal.fire('Success', data.message, 'success').then(() => {
+                    location.reload(); // FORCE RELOAD TO SYNC BUTTONS
+                });
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
             delete window[cb];
         };
         const s = document.createElement('script');
@@ -315,33 +239,41 @@
         document.body.appendChild(s);
     }
 
-    function downloadSlip() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFont("helvetica", "bold");
-        doc.text("INTERNSHIP SALARY SLIP", 105, 20, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`Intern Name: ${user.name} | ID: ${user.id}`, 15, 35);
-        
-        let totalE = 0;
-        const rows = Object.entries(globalHistory).map(([date, data]) => {
-            totalE += parseFloat(data.salary || 0);
-            return [date, data.in, data.out, data.duration, `INR ${data.salary}`];
+    async function handlePunchOut() {
+        const { value: text } = await Swal.fire({
+            title: 'Daily Report',
+            input: 'textarea',
+            inputPlaceholder: 'What did you do today?',
+            showCancelButton: true,
+            inputValidator: (v) => !v && 'Report is required!'
         });
-
-        doc.autoTable({
-            startY: 45,
-            head: [['Date', 'Punch In', 'Punch Out', 'Duration', 'Payout']],
-            body: rows,
-            theme: 'striped'
-        });
-
-        doc.text(`Total Payable Amount: INR ${totalE.toFixed(2)}`, 15, doc.lastAutoTable.finalY + 15);
-        doc.save(`IMS_Slip_${user.id}.pdf`);
+        if (text) markAttendance('out', text);
     }
 
+    function renderCalendar(history) {
+        const viewYear = currentViewDate.getFullYear(), viewMonth = currentViewDate.getMonth();
+        document.getElementById('current-month').innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const cal = document.getElementById('calendar-body');
+        cal.innerHTML = "";
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => cal.innerHTML += `<div class="day-label">${d}</div>`);
+        const firstDay = new Date(viewYear, viewMonth, 1).getDay(), daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        for(let i=0; i<firstDay; i++) cal.innerHTML += `<div></div>`;
+        for(let d=1; d<=daysInMonth; d++) {
+            const dk = getTodayKey(new Date(viewYear, viewMonth, d));
+            const record = history[dk];
+            let status = record ? (record.duration.includes('8h') || parseInt(record.duration) >= 8 ? 'present' : 'partial') : '';
+            cal.innerHTML += `<div class="day ${dk === getTodayKey() ? 'today' : ''} ${status}">${d}</div>`;
+        }
+    }
+
+    function calculateTotalSalary(history) {
+        let total = 0;
+        Object.values(history).forEach(day => { total += parseFloat(day.salary || 0); });
+        document.getElementById('total-salary-display').innerText = `₹${total.toFixed(2)}`;
+    }
+
+    function changeMonth(offset) { currentViewDate.setMonth(currentViewDate.getMonth() + offset); renderCalendar(globalHistory); }
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
-    
     loadDashboard();
 </script>
 </body>
