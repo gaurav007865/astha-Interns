@@ -176,7 +176,7 @@
     s.src = `${SCRIPT_URL}?action=getHRDashboard&callback=${cb}`;
     document.body.appendChild(s);
 }
-    // this function is used to set the password for new interns. It takes the intern ID and the new password, hashes the password using SHA-256, and sends it to the server via a JSONP request. The server will then validate the intern ID and update the password accordingly. Based on the response from the server, it shows a success or error message using SweetAlert and redirects to the login page if successful.
+    // the set password function is use to set password for new interns who have been added to the system but do not have a password yet. It takes the intern ID and the new password, hashes the password using SHA-256 for security, and sends it to the server via a JSONP request. The server will then update the intern's account with the new password hash. If successful, it will show a success message and redirect the user to the login page; otherwise, it will display an error message.
     async function setPassword() {
         const id = document.getElementById('s-uid').value.trim();
         const pass = document.getElementById('s-pass').value;
